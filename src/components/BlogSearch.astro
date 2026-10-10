@@ -1,0 +1,124 @@
+---
+import { ui } from "../data/site";
+const text = ui;
+---
+
+<section
+  class="blog-search"
+  data-blog-search
+  data-base={import.meta.env.BASE_URL}
+  aria-label={text.searchLabel}
+  hidden
+>
+  <label for="blog-query">{text.searchLabel}</label>
+  <div class="blog-search__row">
+    <input
+      id="blog-query"
+      type="search"
+      placeholder={text.searchPlaceholder}
+      autocomplete="off"
+    />
+    <button type="button" data-search-clear>
+      {text.clear}
+    </button>
+  </div>
+  <p class="blog-search__status" data-search-status aria-live="polite"></p>
+  <ul class="search-results" data-search-results></ul>
+</section>
+<noscript>
+  <p class="search-fallback">The article list remains available below.</p>
+</noscript>
+
+<script is:inline>
+  const searchRoot = document.querySelector("[data-blog-search]");
+  if (searchRoot) {
+    searchRoot.hidden = false;
+    const input = searchRoot.querySelector("input");
+    const clear = searchRoot.querySelector("[data-search-clear]");
+    const status = searchRoot.querySelector("[data-search-status]");
+    const results = searchRoot.querySelector("[data-search-results]");
+    let pagefind;
+    let unavailable = false;
+    let requestId = 0;
+    const messages = {
+      loading: "Loading search…",
+      unavailable: "Search is available in the published version of this site.",
+      empty: "No articles match this search.",
+    };
+
+    function updateQuery(query) {
+      const url = new URL(window.location.href);
+      if (query) url.searchParams.set("q", query);
+      else url.searchParams.delete("q");
+      window.history.replaceState({}, "", url);
+    }
+    function reset({ updateUrl = false } = {}) {
+      status.textContent = "";
+      results.replaceChildren();
+      if (updateUrl) updateQuery("");
+    }
+    async function loadPagefind() {
+      if (pagefind || unavailable) return pagefind;
+      status.textContent = messages.loading;
+      try {
+        const base = searchRoot.dataset.base || "/";
+        pagefind = await import(`${base}pagefind/pagefind.js`);
+        await pagefind.init();
+        status.textContent = "";
+        return pagefind;
+      } catch {
+        unavailable = true;
+        status.textContent = messages.unavailable;
+        return null;
+      }
+    }
+    function render(items, query) {
+      results.replaceChildren();
+      if (!items.length) {
+        status.textContent = `${messages.empty} « ${query} »`;
+        return;
+      }
+      status.textContent = "";
+      items.forEach((item) => {
+        const li = document.createElement("li");
+        const link = document.createElement("a");
+        link.href = item.url;
+        link.textContent = item.meta.title;
+        const excerpt = document.createElement("p");
+        excerpt.textContent = item.excerpt
+          .replace(/<[^>]*>/g, "")
+          .replace(/\s+/g, " ")
+          .trim();
+        li.append(link, excerpt);
+        results.append(li);
+      });
+    }
+    async function runSearch(query, { updateUrl = false } = {}) {
+      const currentRequest = ++requestId;
+      if (!query) return reset({ updateUrl });
+      if (updateUrl) updateQuery(query);
+      const api = await loadPagefind();
+      if (!api) return;
+      const response = await api.search(query);
+      const items = await Promise.all(
+        response.results.slice(0, 12).map((result) => result.data()),
+      );
+      if (currentRequest === requestId) render(items, query);
+    }
+    input.addEventListener("input", () =>
+      runSearch(input.value.trim(), { updateUrl: true }),
+    );
+    clear.addEventListener("click", () => {
+      input.value = "";
+      reset({ updateUrl: true });
+      input.focus();
+    });
+    const initialQuery = new URLSearchParams(window.location.search)
+      .get("q")
+      ?.trim();
+    if (initialQuery) {
+      input.value = initialQuery;
+      runSearch(initialQuery);
+    }
+  }
+</script>

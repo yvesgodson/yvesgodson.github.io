@@ -1,0 +1,72 @@
+---
+import { site } from "../data/site";
+import { withBase } from "../lib/routes";
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer.astro";
+import Analytics from "../components/Analytics.astro";
+import "../styles/global.css";
+
+interface Props {
+  title: string;
+  description: string;
+  currentPath: string;
+  canonical?: string;
+  noIndex?: boolean;
+  pagefind?: boolean;
+}
+
+const {
+  title,
+  description,
+  currentPath,
+  canonical,
+  noIndex = false,
+  pagefind = false,
+} = Astro.props;
+const pageTitle = title === site.name ? title : `${title} | ${site.name}`;
+const canonicalUrl = canonical ?? new URL(currentPath, Astro.site).toString();
+---
+
+<!doctype html>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <meta name="theme-color" content="#ffffff" />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="512x512"
+      href={withBase("/favicon.png")}
+    />
+    <link rel="apple-touch-icon" href={withBase("/favicon.png")} />
+    <link rel="canonical" href={canonicalUrl} />
+    {noIndex && <meta name="robots" content="noindex" />}
+    <title>{pageTitle}</title>
+    <script is:inline>
+      try {
+        const stored = localStorage.getItem("akoto-theme");
+        document.documentElement.dataset.theme =
+          stored === "dark" ? "dark" : "light";
+      } catch {}
+    </script>
+  </head>
+  <body>
+    <div class="site-shell">
+      <a class="skip-link" href="#main-content">
+        Skip to content
+      </a>
+      <Header currentPath={currentPath} />
+      <main
+        id="main-content"
+        class="site-main"
+        data-pagefind-ignore={pagefind ? undefined : true}
+      >
+        <slot />
+      </main>
+      <Footer />
+    </div>
+    <Analytics />
+  </body>
+</html>

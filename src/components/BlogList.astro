@@ -1,0 +1,39 @@
+---
+import type { CollectionEntry } from "astro:content";
+import { formatDate } from "../lib/content";
+import { withBase } from "../lib/routes";
+
+interface Props {
+  entries: CollectionEntry<"blog">[];
+}
+
+const { entries } = Astro.props;
+---
+
+<ul class="content-list">
+  {entries.map((entry) => (
+    <li class="content-list__item">
+      <a
+        class="content-list__link"
+        href={withBase(`/blog/${entry.data.slug}/`)}
+      >
+        {entry.data.cover && (
+          <img
+            class="content-list__image"
+            src={withBase(entry.data.cover.src)}
+            alt={entry.data.cover.alt}
+            loading="lazy"
+          />
+        )}
+        <span class="content-list__copy">
+          <span class="content-list__title">{entry.data.title}</span>
+          <time datetime={entry.data.publishedAt.toISOString()}>
+            {formatDate(entry.data.publishedAt, {
+              dateStyle: "medium",
+            })}
+          </time>
+        </span>
+      </a>
+    </li>
+  ))}
+</ul>

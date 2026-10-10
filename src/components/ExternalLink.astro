@@ -1,0 +1,17 @@
+---
+import SignalArrow from "./SignalArrow.astro";
+
+interface Props {
+  href: string;
+  label: string;
+  srLabel: string;
+}
+
+const { href, label, srLabel } = Astro.props;
+---
+
+<a href={href} target="_blank" rel="noreferrer">
+  {label}
+  <SignalArrow />
+  <span class="visually-hidden">{srLabel}</span>
+</a>

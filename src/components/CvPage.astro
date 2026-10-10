@@ -1,0 +1,42 @@
+---
+import { render } from "astro:content";
+import { getProfileSections } from "../lib/content";
+import BaseLayout from "../layouts/BaseLayout.astro";
+
+interface Props {
+  currentPath: string;
+}
+const { currentPath } = Astro.props;
+const sections = await getProfileSections("cv");
+const rendered = await Promise.all(
+  sections.map(async (entry) => ({ entry, ...(await render(entry)) })),
+);
+---
+
+<BaseLayout
+  title="CV"
+  description="AKOTO Yves's education, experience, and skills."
+  currentPath={currentPath}
+>
+  <div class="cv-page">
+    <h1>CV</h1>
+    {rendered.map(({ entry, Content }, index) => (
+      <section
+        class:list={{ "cv-section": true, "cv-section--intro": index === 0 }}
+        aria-labelledby={`cv-${entry.data.slug}`}
+      >
+        {index !== 0 && (
+          <h2 id={`cv-${entry.data.slug}`}>{entry.data.title}</h2>
+        )}
+        {index === 0 && (
+          <h2 class="visually-hidden" id={`cv-${entry.data.slug}`}>
+            {entry.data.title}
+          </h2>
+        )}
+        <div class="cv-section__body">
+          <Content />
+        </div>
+      </section>
+    ))}
+  </div>
+</BaseLayout>

@@ -1,0 +1,14 @@
+---
+interface Props {
+  label: string;
+  value: string;
+  source?: string;
+}
+const { label, value, source } = Astro.props;
+---
+
+<dl class="mdx-metric">
+  <dt>{label}</dt>
+  <dd>{value}</dd>
+  {source && <small>{source}</small>}
+</dl>

@@ -1,0 +1,14 @@
+---
+const code = import.meta.env.PUBLIC_GOATCOUNTER_CODE;
+const enabled =
+  import.meta.env.PROD && typeof code === "string" && code.length > 0;
+const endpoint = enabled ? `https://${code}.goatcounter.com/count` : undefined;
+---
+
+{enabled && (
+  <script
+    async
+    data-goatcounter={endpoint}
+    src="https://gc.zgo.at/count.js"
+  ></script>
+)}

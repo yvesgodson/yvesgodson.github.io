@@ -1,0 +1,56 @@
+---
+import type { CollectionEntry } from "astro:content";
+import BaseLayout from "../../../../../layouts/BaseLayout.astro";
+import BlogList from "../../../../../components/BlogList.astro";
+import Pagination from "../../../../../components/Pagination.astro";
+import { tagLabels } from "../../../../../data/site";
+import { getPublicEntries } from "../../../../../lib/content";
+
+export async function getStaticPaths() {
+  const entries = await getPublicEntries("blog");
+  const tags = Array.from(new Set(entries.flatMap((entry) => entry.data.tags)));
+  return tags.flatMap((tag) => {
+    const tagged = entries.filter((entry) => entry.data.tags.includes(tag));
+    const total = Math.ceil(tagged.length / 10);
+    return Array.from({ length: Math.max(0, total - 1) }, (_, index) => {
+      const page = index + 2;
+      return {
+        params: { tag, page: String(page) },
+        props: {
+          tag,
+          entries: tagged.slice((page - 1) * 10, page * 10),
+          page,
+          total,
+        },
+      };
+    });
+  });
+}
+
+const { tag, entries, page, total } = Astro.props as {
+  tag: keyof typeof tagLabels;
+  entries: CollectionEntry<"blog">[];
+  page: number;
+  total: number;
+};
+---
+
+<BaseLayout
+  title={`${tagLabels[tag]}, page ${page}`}
+  description={`Articles related to the ${tagLabels[tag]} tag.`}
+  currentPath={Astro.url.pathname}
+>
+  <section class="page-head" aria-labelledby="tag-title">
+    <h1 class="page-title" id="tag-title">
+      {tagLabels[tag]}, page {page}.
+    </h1>
+  </section>
+  <section
+    class="page-section--tight"
+    aria-label="Related articles"
+    data-pagefind-ignore
+  >
+    <BlogList entries={entries} />
+    <Pagination basePath={`/blog/tags/${tag}`} page={page} total={total} />
+  </section>
+</BaseLayout>

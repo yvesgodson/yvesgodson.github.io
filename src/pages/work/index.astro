@@ -1,0 +1,55 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import EmptyState from "../../components/EmptyState.astro";
+import { formatPeriod, getPublicEntries } from "../../lib/content";
+import { withBase } from "../../lib/routes";
+
+const entries = await getPublicEntries("work");
+---
+
+<BaseLayout
+  title="Work"
+  description="Work and case studies published by Yves Akoto."
+  currentPath={Astro.url.pathname}
+>
+  <section class="page-head" aria-labelledby="work-title">
+    <p class="page-head__eyeline">Work</p>
+    <h1 class="page-title" id="work-title">
+      Case studies, with rigour.
+    </h1>
+    <p class="page-head__intro">
+      Every publication states its context, scope, and what may be made public.
+    </p>
+  </section>
+  <section
+    class="page-section--tight"
+    aria-label="Work list"
+    data-pagefind-ignore
+  >
+    {entries.length ? (
+      <ul class="content-list">
+        {entries.map((entry) => (
+          <li class="content-list__item">
+            <a
+              class="content-list__link"
+              href={withBase(`/work/${entry.data.slug}/`)}
+            >
+              <div>
+                <h2 class="content-list__title">{entry.data.title}</h2>
+                <p class="content-list__summary">{entry.data.summary}</p>
+              </div>
+              <span class="content-list__meta">
+                {formatPeriod(entry.data.periodStart, entry.data.periodEnd)}
+              </span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    ) : (
+      <EmptyState>
+        Case studies will appear here once they have been documented and
+        verified.
+      </EmptyState>
+    )}
+  </section>
+</BaseLayout>

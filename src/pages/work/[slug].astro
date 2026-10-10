@@ -1,0 +1,74 @@
+---
+import { render, type CollectionEntry } from "astro:content";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import ExternalLink from "../../components/ExternalLink.astro";
+import { formatPeriod, getPublicEntries } from "../../lib/content";
+import { withBase } from "../../lib/routes";
+
+export async function getStaticPaths() {
+  const entries = await getPublicEntries("work");
+  return entries.map((entry) => ({
+    params: { slug: entry.data.slug },
+    props: { entry },
+  }));
+}
+
+const { entry } = Astro.props as { entry: CollectionEntry<"work"> };
+const { Content } = await render(entry);
+---
+
+<BaseLayout
+  title={entry.data.title}
+  description={entry.data.summary}
+  currentPath={Astro.url.pathname}
+>
+  <div class="article-layout">
+    <article class="prose">
+      <p class="article-meta">
+        {formatPeriod(entry.data.periodStart, entry.data.periodEnd)}
+      </p>
+      <h1>{entry.data.title}</h1>
+      <p>{entry.data.summary}</p>
+      <dl class="detail-facts">
+        <div>
+          <dt>Role</dt>
+          <dd>{entry.data.role}</dd>
+        </div>
+        <div>
+          <dt>Visibility</dt>
+          <dd>
+            {entry.data.visibility === "public"
+              ? "Public information"
+              : "Description only"}
+          </dd>
+        </div>
+        <div class="detail-facts__wide">
+          <dt>Technology</dt>
+          <dd>{entry.data.stack.join(", ")}</dd>
+        </div>
+      </dl>
+      {(entry.data.demoUrl || entry.data.repositoryUrl) && (
+        <p class="route-actions">
+          {entry.data.demoUrl && (
+            <ExternalLink
+              href={entry.data.demoUrl}
+              label="View demo"
+              srLabel="External link"
+            />
+          )}
+          {entry.data.repositoryUrl && (
+            <ExternalLink
+              href={entry.data.repositoryUrl}
+              label="View repository"
+              srLabel="External link"
+            />
+          )}
+        </p>
+      )}
+      <Content />
+      <a class="article-return" href={withBase("/work/")}>
+        Back to work
+      </a>
+    </article>
+  </div>
+</BaseLayout>

@@ -1,0 +1,77 @@
+---
+import { render, type CollectionEntry } from "astro:content";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { formatDate, getPublicEntries } from "../../lib/content";
+import { withBase } from "../../lib/routes";
+
+export async function getStaticPaths() {
+  const entries = await getPublicEntries("blog");
+  return entries.map((entry) => ({
+    params: { slug: entry.data.slug },
+    props: { entry },
+  }));
+}
+
+const { entry } = Astro.props as { entry: CollectionEntry<"blog"> };
+const { Content, headings } = await render(entry);
+const toc = headings.filter(
+  (heading) => heading.depth === 2 || heading.depth === 3,
+);
+const showToc = toc.filter((heading) => heading.depth === 2).length >= 3;
+const hasUpdate =
+  entry.data.updatedAt &&
+  entry.data.updatedAt.getTime() > entry.data.publishedAt.getTime();
+---
+
+<BaseLayout
+  title={entry.data.title}
+  description={entry.data.description}
+  currentPath={Astro.url.pathname}
+  pagefind
+>
+  <div
+    class:list={{ "article-layout": true, "article-layout--with-toc": showToc }}
+  >
+    <article class="prose" data-pagefind-body>
+      <p class="article-meta">
+        <time datetime={entry.data.publishedAt.toISOString()}>
+          {formatDate(entry.data.publishedAt)}
+        </time>
+      </p>
+      <h1>{entry.data.title}</h1>
+      {entry.data.cover && (
+        <figure class="article-cover">
+          <img
+            src={withBase(entry.data.cover.src)}
+            alt={entry.data.cover.alt}
+          />
+          <figcaption>{entry.data.cover.credit}</figcaption>
+        </figure>
+      )}
+      <Content />
+      {hasUpdate && (
+        <p class="article-meta">
+          Updated{" "}
+          <time datetime={entry.data.updatedAt?.toISOString()}>
+            {formatDate(entry.data.updatedAt!)}
+          </time>
+        </p>
+      )}
+      <a class="article-return" href={withBase("/blog/")}>
+        Back to posts
+      </a>
+    </article>
+    {showToc && (
+      <aside class="toc" aria-labelledby="toc-title">
+        <h2 id="toc-title">On this page</h2>
+        <ol>
+          {toc.map((heading) => (
+            <li data-depth={heading.depth}>
+              <a href={`#${heading.slug}`}>{heading.text}</a>
+            </li>
+          ))}
+        </ol>
+      </aside>
+    )}
+  </div>
+</BaseLayout>

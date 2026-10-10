@@ -1,0 +1,90 @@
+---
+import { site } from "../data/site";
+import { withBase } from "../lib/routes";
+
+const counterCode = import.meta.env.PUBLIC_GOATCOUNTER_CODE;
+const counterUrl =
+  typeof counterCode === "string" && /^[a-z0-9-]+$/.test(counterCode)
+    ? `https://${counterCode}.goatcounter.com/counter/TOTAL.json`
+    : undefined;
+---
+
+<footer class="site-footer">
+  <div class="site-footer__row">
+    <p class="site-footer__identity">AKOTO Yves</p>
+    <nav class="site-footer__links" aria-label="Footer">
+      <a
+        href={`mailto:${site.email}`}
+        aria-label={`Email ${site.email}`}
+        title={site.email}
+      >
+        <img src={withBase("/icons/mail.svg")} alt="" width="20" height="20" />
+      </a>
+      <a
+        href={site.github}
+        target="_blank"
+        rel="noreferrer"
+        aria-label="GitHub"
+        title="GitHub"
+      >
+        <img
+          src={withBase("/icons/github.svg")}
+          alt=""
+          width="20"
+          height="20"
+        />
+      </a>
+      <a
+        href={site.linkedin}
+        target="_blank"
+        rel="noreferrer"
+        aria-label="LinkedIn"
+        title="LinkedIn"
+      >
+        <img
+          src={withBase("/icons/linkedin.svg")}
+          alt=""
+          width="20"
+          height="20"
+        />
+      </a>
+      <a
+        href={withBase("/documents/AKOTO-Yves-CV.pdf")}
+        download
+        aria-label="Download CV (PDF)"
+        title="Download CV (PDF)"
+      >
+        <img
+          src={withBase("/icons/file-earmark-arrow-down.svg")}
+          alt=""
+          width="20"
+          height="20"
+        />
+      </a>
+      <a href={withBase("/rss.xml")} aria-label="RSS" title="RSS">
+        <img src={withBase("/icons/rss.svg")} alt="" width="20" height="20" />
+      </a>
+    </nav>
+  </div>
+  <p class="site-footer__visits">
+    <img src={withBase("/icons/eye.svg")} alt="" width="16" height="16" />
+    <span class="visually-hidden">Site views:</span>
+    <span data-visit-count data-counter-url={counterUrl ?? ""}>
+      —
+    </span>
+  </p>
+</footer>
+
+<script is:inline>
+  const count = document.querySelector("[data-visit-count]");
+  const url = count?.getAttribute("data-counter-url");
+  if (count && url) {
+    fetch(url)
+      .then((response) => (response.ok ? response.json() : Promise.reject()))
+      .then((data) => {
+        if (typeof data.count === "string" || typeof data.count === "number")
+          count.textContent = String(data.count);
+      })
+      .catch(() => {});
+  }
+</script>

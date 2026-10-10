@@ -1,0 +1,257 @@
+---
+import { site, ui } from "../data/site";
+import { withBase } from "../lib/routes";
+
+interface Props {
+  currentPath: string;
+}
+
+const { currentPath } = Astro.props;
+const text = ui;
+const pathWithoutBase =
+  currentPath.replace(import.meta.env.BASE_URL.replace(/\/$/, ""), "") || "/";
+const isCurrent = (href: string) =>
+  href === "/" ? pathWithoutBase === "/" : pathWithoutBase.startsWith(href);
+---
+
+<header class="site-header">
+  <nav class="header-social" aria-label="Contact me">
+    <a
+      href={site.github}
+      target="_blank"
+      rel="noreferrer"
+      aria-label="GitHub"
+      title="GitHub"
+    >
+      <img src={withBase("/icons/github.svg")} alt="" width="20" height="20" />
+    </a>
+    <a
+      href={site.linkedin}
+      target="_blank"
+      rel="noreferrer"
+      aria-label="LinkedIn"
+      title="LinkedIn"
+    >
+      <img
+        src={withBase("/icons/linkedin.svg")}
+        alt=""
+        width="20"
+        height="20"
+      />
+    </a>
+    <a href={`mailto:${site.email}`} aria-label="Email" title={site.email}>
+      <img src={withBase("/icons/mail.svg")} alt="" width="20" height="20" />
+    </a>
+  </nav>
+  <nav class="site-header__nav site-nav" aria-label={text.menu}>
+    <span class="site-nav__indicator" aria-hidden="true"></span>
+    {text.nav.map(([label, path]) => (
+      <a
+        href={withBase(path)}
+        aria-current={isCurrent(path) ? "page" : undefined}
+      >
+        {label}
+      </a>
+    ))}
+  </nav>
+  <div class="site-header__tools">
+    <button
+      class="theme-switch"
+      type="button"
+      data-theme-toggle
+      data-light-label={text.light}
+      data-dark-label={text.dark}
+      aria-label={text.light}
+      aria-pressed="false"
+      title={text.light}
+    >
+      <span class="theme-switch__track" aria-hidden="true">
+        <span class="theme-switch__thumb">
+          <svg
+            class="theme-switch__sun"
+            viewBox="0 0 100 100"
+            fill="none"
+            aria-hidden="true"
+          >
+            <circle cx="50" cy="50" r="17" fill="currentColor" />
+            <path
+              d="M50 7v12m0 62v12M7 50h12m62 0h12M19 19l9 9m44 44 9 9m0-62-9 9M28 72l-9 9"
+              stroke="currentColor"
+              stroke-width="8"
+              stroke-linecap="square"
+            />
+          </svg>
+          <svg
+            class="theme-switch__moon"
+            viewBox="0 0 48 48"
+            aria-hidden="true"
+          >
+            <mask id="theme-moon-cutout">
+              <circle cx="24" cy="24" r="16" fill="white" />
+              <circle cx="14" cy="16" r="14" fill="black" />
+            </mask>
+            <circle
+              cx="24"
+              cy="24"
+              r="16"
+              fill="currentColor"
+              mask="url(#theme-moon-cutout)"
+            />
+          </svg>
+        </span>
+      </span>
+    </button>
+    <details
+      class="menu"
+      data-open-label={text.closeMenu}
+      data-closed-label={text.menu}
+    >
+      <summary class="menu-summary">{text.menu}</summary>
+      <nav class="menu__panel" aria-label={text.menu}>
+        {text.nav.map(([label, path]) => (
+          <a
+            href={withBase(path)}
+            aria-current={isCurrent(path) ? "page" : undefined}
+          >
+            {label}
+          </a>
+        ))}
+        <span class="menu__group-label">Contact</span>
+        <a href={site.github} target="_blank" rel="noreferrer">
+          GitHub
+        </a>
+        <a href={site.linkedin} target="_blank" rel="noreferrer">
+          LinkedIn
+        </a>
+        <a href={`mailto:${site.email}`}>{site.email}</a>
+      </nav>
+    </details>
+  </div>
+</header>
+
+<script is:inline>
+  const root = document.documentElement;
+  const storageKey = "akoto-theme";
+  const button = document.querySelector("[data-theme-toggle]");
+  function setTheme(theme) {
+    root.dataset.theme = theme;
+    const themeColor = document.querySelector('meta[name="theme-color"]');
+    if (themeColor)
+      themeColor.setAttribute(
+        "content",
+        theme === "dark" ? "#171717" : "#ffffff",
+      );
+    try {
+      localStorage.setItem(storageKey, theme);
+    } catch {}
+    if (button) {
+      const next =
+        theme === "dark" ? button.dataset.lightLabel : button.dataset.darkLabel;
+      button.setAttribute("aria-label", next);
+      button.setAttribute("title", next);
+      button.setAttribute("aria-pressed", String(theme === "dark"));
+    }
+  }
+  if (button) {
+    const initialTheme = root.dataset.theme === "dark" ? "dark" : "light";
+    setTheme(initialTheme);
+    button.addEventListener("click", () =>
+      setTheme(root.dataset.theme === "light" ? "dark" : "light"),
+    );
+  }
+  const pageNav = document.querySelector(".site-nav");
+  const navIndicator = pageNav?.querySelector(".site-nav__indicator");
+  const navLinks = pageNav ? Array.from(pageNav.querySelectorAll("a")) : [];
+  const currentLink = navLinks.find(
+    (link) => link.getAttribute("aria-current") === "page",
+  );
+  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+  function moveNavIndicator(link, instant = false) {
+    if (!pageNav || !navIndicator) return;
+    if (!link) {
+      delete pageNav.dataset.indicatorReady;
+      return;
+    }
+    const navBox = pageNav.getBoundingClientRect();
+    const linkBox = link.getBoundingClientRect();
+    if (instant) navIndicator.style.transition = "none";
+    navIndicator.style.width = `${linkBox.width}px`;
+    navIndicator.style.transform = `translateX(${linkBox.left - navBox.left}px)`;
+    pageNav.dataset.indicatorReady = "true";
+    if (instant) {
+      requestAnimationFrame(() =>
+        navIndicator.style.removeProperty("transition"),
+      );
+    }
+  }
+  moveNavIndicator(currentLink, true);
+  navLinks.forEach((link) => {
+    link.addEventListener("pointerenter", () => moveNavIndicator(link));
+    link.addEventListener("focus", () => moveNavIndicator(link));
+    link.addEventListener("click", (event) => {
+      if (
+        event.defaultPrevented ||
+        event.button !== 0 ||
+        event.metaKey ||
+        event.ctrlKey ||
+        event.shiftKey ||
+        event.altKey ||
+        reducedMotion.matches ||
+        link === currentLink
+      )
+        return;
+      event.preventDefault();
+      moveNavIndicator(link);
+      pageNav.dataset.committing = "true";
+      link.classList.add("is-committing");
+      window.setTimeout(() => window.location.assign(link.href), 170);
+    });
+  });
+  pageNav?.addEventListener(
+    "pointerleave",
+    () =>
+      pageNav.dataset.committing !== "true" && moveNavIndicator(currentLink),
+  );
+  pageNav?.addEventListener("focusout", (event) => {
+    if (
+      pageNav.dataset.committing !== "true" &&
+      !pageNav.contains(event.relatedTarget)
+    )
+      moveNavIndicator(currentLink);
+  });
+  window.addEventListener("resize", () => moveNavIndicator(currentLink, true));
+  const menu = document.querySelector(".menu");
+  const menuSummary = menu?.querySelector("summary");
+  function closeMenu() {
+    if (!menu?.open || menu.dataset.closing === "true") return;
+    if (reducedMotion.matches) {
+      menu.open = false;
+      return;
+    }
+    menu.dataset.closing = "true";
+    window.setTimeout(() => {
+      menu.open = false;
+      delete menu.dataset.closing;
+    }, 160);
+  }
+  menu?.addEventListener("toggle", () => {
+    menuSummary.textContent = menu.open
+      ? menu.dataset.openLabel
+      : menu.dataset.closedLabel;
+  });
+  menuSummary?.addEventListener("click", (event) => {
+    if (menu.open) {
+      event.preventDefault();
+      closeMenu();
+    }
+  });
+  document.addEventListener("pointerdown", (event) => {
+    if (menu?.open && !menu.contains(event.target)) closeMenu();
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && menu?.open) {
+      closeMenu();
+      menuSummary?.focus();
+    }
+  });
+</script>

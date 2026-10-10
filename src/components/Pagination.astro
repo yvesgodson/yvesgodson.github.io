@@ -1,0 +1,31 @@
+---
+import { withBase } from "../lib/routes";
+
+interface Props {
+  basePath: string;
+  page: number;
+  total: number;
+}
+
+const { basePath, page, total } = Astro.props;
+const href = (number: number) =>
+  withBase(number === 1 ? `${basePath}/` : `${basePath}/page/${number}/`);
+---
+
+{total > 1 && (
+  <nav class="pagination" aria-label="Article pagination">
+    {page > 1 && (
+      <a href={href(page - 1)} rel="prev">
+        Previous
+      </a>
+    )}
+    <span class="pagination__status">
+      Page {page} of {total}
+    </span>
+    {page < total && (
+      <a href={href(page + 1)} rel="next">
+        Next
+      </a>
+    )}
+  </nav>
+)}

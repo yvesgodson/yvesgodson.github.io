@@ -1,0 +1,56 @@
+---
+interface Props {
+  code: string;
+  language?: string;
+  label?: string;
+  copyLabel?: string;
+  copiedLabel?: string;
+  unavailableLabel?: string;
+}
+
+const {
+  code,
+  language = "text",
+  label,
+  copyLabel = "Copy",
+  copiedLabel = "Copied",
+  unavailableLabel = "Copy unavailable",
+} = Astro.props;
+---
+
+<div class="mdx-codeblock">
+  <div class="mdx-codeblock__head">
+    <span>{label ?? language}</span>
+    <button
+      type="button"
+      data-copy-code
+      data-success={copiedLabel}
+      data-failure={unavailableLabel}
+    >
+      {copyLabel}
+    </button>
+  </div>
+  <pre><code class={`language-${language}`}>{code}</code></pre>
+</div>
+
+<script is:inline>
+  document.querySelectorAll("[data-copy-code]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      const code =
+        button.closest(".mdx-codeblock")?.querySelector("code")?.textContent ||
+        "";
+      try {
+        await navigator.clipboard.writeText(code);
+        const original = button.textContent;
+        button.textContent = "Copié";
+        button.textContent = button.dataset.success || button.textContent;
+        setTimeout(() => {
+          button.textContent = original;
+        }, 1600);
+      } catch {
+        button.textContent = "Copie indisponible";
+        button.textContent = button.dataset.failure || button.textContent;
+      }
+    });
+  });
+</script>

@@ -1,0 +1,53 @@
+---
+import { existsSync } from "node:fs";
+import { render } from "astro:content";
+import { getProfileSections } from "../lib/content";
+import { withBase } from "../lib/routes";
+import BaseLayout from "../layouts/BaseLayout.astro";
+
+interface Props {
+  currentPath: string;
+}
+
+const { currentPath } = Astro.props;
+const sections = await getProfileSections("home");
+const rendered = await Promise.all(
+  sections.map(async (entry) => ({ entry, ...(await render(entry)) })),
+);
+const portraitExists = existsSync("public/images/portrait.jpeg");
+---
+
+<BaseLayout
+  title="AKOTO Yves"
+  description="AKOTO Yves's home page: computer science and artificial intelligence."
+  currentPath={currentPath}
+>
+  <h1 class="visually-hidden">AKOTO Yves</h1>
+  <div class="home-layout">
+    <div class="home-layout__copy">
+      {rendered.map(({ entry, Content }) => (
+        <section class="home-section" aria-label={entry.data.title}>
+          <Content />
+        </section>
+      ))}
+      <p class="home-next">
+        <a href={withBase("/blog/")}>Read my blog</a>
+        <a href={withBase("/cv/")}>View my CV</a>
+      </p>
+    </div>
+    <div class="home-portrait">
+      {portraitExists ? (
+        <img
+          src={withBase("/images/portrait.jpeg")}
+          alt="Portrait of AKOTO Yves"
+          width="240"
+          height="240"
+        />
+      ) : (
+        <span role="img" aria-label="Profile photo to be added">
+          AY
+        </span>
+      )}
+    </div>
+  </div>
+</BaseLayout>

@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.astro/
+.env
+.env.*
+!.env.example
+DESIGN.md
+EXPLAIN.md
+SPECIFICATIONS.md
+need.md
+AGENTS.md

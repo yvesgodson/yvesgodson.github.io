@@ -1,0 +1,25 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { withBase } from "../lib/routes";
+---
+
+<BaseLayout
+  title="Page not found"
+  description="The requested page could not be found."
+  currentPath={Astro.url.pathname}
+  noIndex
+>
+  <section class="page-head" aria-labelledby="not-found-title">
+    <p class="page-head__eyeline">404</p>
+    <h1 class="page-title" id="not-found-title">
+      This page does not exist.
+    </h1>
+    <p class="page-head__intro">
+      You can return home or browse the available pages.
+    </p>
+    <p class="route-actions">
+      <a href={withBase("/")}>Home</a>
+      <a href={withBase("/blog/")}>Blog</a>
+    </p>
+  </section>
+</BaseLayout>
